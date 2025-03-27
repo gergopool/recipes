@@ -1,0 +1,259 @@
+{% macro recipe_form(action, is_edit=False, recipe=None, translations=None) %}
+<form method="POST" action="{{ action }}" enctype="multipart/form-data" id="recipeForm">
+    <div class="mb-3">
+        <label for="title" class="form-label">{{ translations.title }}</label>
+        <input type="text" class="form-control" id="title" name="title" value="{{ recipe.title if recipe else '' }}" required>
+    </div>
+    
+    <div class="mb-3">
+        <label for="memory" class="form-label">{{ translations.memory }}</label>
+        <textarea class="form-control" id="memory" name="memory" rows="4" 
+                  placeholder="{{ translations.memory_placeholder }}">{{ recipe.memory if recipe else '' }}</textarea>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="category" class="form-label">{{ translations.category }}</label>
+            <select class="form-select" id="category" name="category" required>
+                <option value="soup" {% if recipe and recipe.category == 'soup' %}selected{% endif %}>{{ translations.soup }}</option>
+                <option value="main_dish" {% if recipe and recipe.category == 'main_dish' %}selected{% endif %}>{{ translations.main_dish }}</option>
+                <option value="desert" {% if recipe and recipe.category == 'desert' %}selected{% endif %}>{{ translations.desert }}</option>
+                <option value="other" {% if recipe and recipe.category == 'other' %}selected{% endif %}>{{ translations.other }}</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">{{ translations.main_image }}</label>
+            
+            {% if recipe and recipe.main_image %}
+            <div class="main-image-preview mb-3">
+                <div class="position-relative">
+                    <img src="{{ url_for('protected_media', filename=recipe.main_image) }}" 
+                         class="img-fluid rounded main-image-thumbnail" alt="{{ recipe.title }}">
+                    <div class="image-control-overlay">
+                        <div class="image-controls">
+                            <label for="main_image" class="btn btn-sm btn-light edit-icon-btn me-2">
+                                <i class="bi bi-pencil"></i>
+                            </label>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteMainImageModal">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <input type="file" class="form-control d-none" id="main_image" name="main_image" accept="image/*">
+                <input type="hidden" id="remove_main_image" name="remove_main_image" value="0">
+            </div>
+            {% else %}
+            <input type="file" class="form-control" id="main_image" name="main_image" accept="image/*">
+            {% endif %}
+        </div>
+    </div>
+    
+    <h4 class="mt-4">{{ translations.ingredients }}</h4>
+    <div id="ingredients-container">
+        {% if recipe and recipe.ingredients %}
+            {% for ingredient in recipe.ingredients %}
+            <div class="ingredient-row mb-3">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" name="ingredient_name" value="{{ ingredient.name }}" placeholder="{{ translations.ingredient_name }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="ingredient_amount" value="{{ ingredient.amount }}" placeholder="{{ translations.amount }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="ingredient_unit">
+                            <option value="">{{ translations.select_unit }}</option>
+                            <option value="g" {% if ingredient.unit == 'g' %}selected{% endif %}>{{ translations.unit_g }}</option>
+                            <option value="dkg" {% if ingredient.unit == 'dkg' %}selected{% endif %}>{{ translations.unit_dkg }}</option>
+                            <option value="pcs" {% if ingredient.unit == 'pcs' %}selected{% endif %}>{{ translations.unit_pcs }}</option>
+                            <option value="coffee_spoon" {% if ingredient.unit == 'coffee_spoon' %}selected{% endif %}>{{ translations.unit_coffee_spoon }}</option>
+                            <option value="teaspoon" {% if ingredient.unit == 'teaspoon' %}selected{% endif %}>{{ translations.unit_teaspoon }}</option>
+                            <option value="tablespoon" {% if ingredient.unit == 'tablespoon' %}selected{% endif %}>{{ translations.unit_tablespoon }}</option>
+                            <option value="ml" {% if ingredient.unit == 'ml' %}selected{% endif %}>{{ translations.unit_ml }}</option>
+                            <option value="liter" {% if ingredient.unit == 'liter' %}selected{% endif %}>{{ translations.unit_liter }}</option>
+                            <option value="pinch" {% if ingredient.unit == 'pinch' %}selected{% endif %}>{{ translations.unit_pinch }}</option>
+                            <option value="little" {% if ingredient.unit == 'little' %}selected{% endif %}>{{ translations.unit_little }}</option>
+                            <option value="lot" {% if ingredient.unit == 'lot' %}selected{% endif %}>{{ translations.unit_lot }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger remove-ingredient">-</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ingredient-row mb-3">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" name="ingredient_name" placeholder="{{ translations.ingredient_name }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="ingredient_amount" placeholder="{{ translations.amount }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="ingredient_unit">
+                            <option value="">{{ translations.select_unit }}</option>
+                            <option value="g">{{ translations.unit_g }}</option>
+                            <option value="dkg">{{ translations.unit_dkg }}</option>
+                            <option value="pcs">{{ translations.unit_pcs }}</option>
+                            <option value="coffee_spoon">{{ translations.unit_coffee_spoon }}</option>
+                            <option value="teaspoon">{{ translations.unit_teaspoon }}</option>
+                            <option value="tablespoon">{{ translations.unit_tablespoon }}</option>
+                            <option value="ml">{{ translations.unit_ml }}</option>
+                            <option value="liter">{{ translations.unit_liter }}</option>
+                            <option value="pinch">{{ translations.unit_pinch }}</option>
+                            <option value="little">{{ translations.unit_little }}</option>
+                            <option value="lot">{{ translations.unit_lot }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger remove-ingredient">-</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <button type="button" id="add-ingredient" class="btn btn-secondary mb-4">+ {{ translations.add_ingredient }}</button>
+    
+    <h4 class="mt-4">{{ translations.steps }}</h4>
+    <div id="steps-container">
+        {% if recipe and recipe.steps %}
+            {% for step in recipe.steps|sort(attribute='order') %}
+            <div class="step-row mb-3" id="step_{{ loop.index0 }}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <textarea class="form-control" name="step_description_{{ loop.index0 }}" rows="3" placeholder="{{ translations.step_description }}" required>{{ step.description }}</textarea>
+                    </div>
+                    <div class="col-md-3">
+                        {% if not step or not step.image %}
+                        <div class="mb-2">
+                            <label for="step_image_{{ loop.index0 }}" class="form-label">
+                                <i class="bi bi-image me-1"></i>{{ translations.step_image }}
+                            </label>
+                            <input type="file" class="form-control step-image-input" 
+                                   id="step_image_{{ loop.index0 }}" 
+                                   name="step_image_{{ loop.index0 }}" 
+                                   data-step-index="{{ loop.index0 }}"
+                                   accept="image/*">
+                            <div class="step-image-preview-{{ loop.index0 }} mt-2 d-none">
+                                <div class="position-relative">
+                                    <img src="" class="img-fluid rounded step-image-thumbnail" alt="Előnézet">
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="mb-2">
+                            <label class="form-label">
+                                <i class="bi bi-image me-1"></i>{{ translations.step_image }}
+                            </label>
+                            <div class="step-image-preview-{{ loop.index0 }} mb-2">
+                                <div class="position-relative">
+                                    <img src="{{ url_for('protected_media', filename='square_' + step.image) }}" 
+                                         class="img-fluid rounded step-image-thumbnail" 
+                                         alt="Step {{ loop.index0 + 1 }}"
+                                         onerror="this.onerror=null; this.src='{{ url_for('protected_media', filename=step.image) }}'; console.log('Falling back to original step image');">
+                                    <div class="image-control-overlay">
+                                        <div class="image-controls">
+                                            <label for="step_image_{{ loop.index0 }}" class="btn btn-sm btn-light edit-icon-btn me-2">
+                                                <i class="bi bi-pencil"></i>
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-danger delete-step-image-btn" 
+                                                    data-step-index="{{ loop.index0 }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" class="form-control d-none step-image-input" 
+                                   id="step_image_{{ loop.index0 }}" 
+                                   name="step_image_{{ loop.index0 }}" 
+                                   data-step-index="{{ loop.index0 }}"
+                                   accept="image/*">
+                            <input type="hidden" id="remove_step_image_{{ loop.index0 }}" 
+                                   name="remove_step_image_{{ loop.index0 }}" 
+                                   value="0">
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger remove-step" data-step-index="{{ loop.index0 }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="step-row mb-3">
+                <div class="row">
+                    <div class="col-md-8">
+                        <textarea class="form-control" name="step_description_0" rows="3" placeholder="{{ translations.step_description }}" required></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ translations.step_image }}</label>
+                        <div class="custom-file-input">
+                            <input class="form-control" type="file" name="step_image_0" accept="image/*">
+                            <label class="custom-file-label">
+                                <i class="bi bi-image"></i> Kép feltöltése
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <button type="button" id="add-step" class="btn btn-secondary mb-4">+ {{ translations.add_step }}</button>
+    
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        {% if is_edit %}
+        <a href="{{ url_for('recipe_detail', recipe_id=recipe.id) }}" class="btn btn-outline-secondary me-md-2">{{ translations.cancel }}</a>
+        <button type="submit" class="btn btn-primary">{{ translations.save_changes }}</button>
+        {% else %}
+        <button type="submit" class="btn btn-primary">{{ translations.save_recipe }}</button>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Delete Main Image Modal -->
+<div class="modal fade" id="deleteMainImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kép törlése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Biztosan törölni szeretnéd a fő képet?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteMainImage">Törlés</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for step image deletion -->
+{% if step and step.image %}
+<div class="modal fade" id="deleteStepImageModal_{{ loop.index0 }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lépés kép törlése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Biztosan törölni szeretnéd a(z) {{ loop.index0 + 1 }}. lépés képét?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
+                <button type="button" class="btn btn-danger confirm-delete-step-image" data-step-index="{{ loop.index0 }}">Törlés</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endmacro %} 

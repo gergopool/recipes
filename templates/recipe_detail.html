@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero section with improved styling -->
+<div class="recipe-hero">
+    <div class="recipe-hero-image">
+        {% if recipe.main_image %}
+        <img src="{{ url_for('protected_media', filename=recipe.main_image) }}" alt="{{ recipe.title }}">
+        {% else %}
+        <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="{{ recipe.title }}">
+        {% endif %}
+    </div>
+    <div class="recipe-hero-top-right">
+        <div class="recipe-editor-small">
+            {% if recipe.user %}
+            <img src="{{ url_for('static', filename='images/' + recipe.user.username + '.jpg') }}" 
+                 onerror="this.src='{{ url_for('static', filename='images/default-user.jpg') }}'" 
+                 alt="{{ recipe.user.username }}" 
+                 class="editor-avatar-small">
+            <span class="editor-name">{{ recipe.user.username }}</span>
+            {% else %}
+            <img src="{{ url_for('static', filename='images/default-user.jpg') }}" 
+                 alt="Unknown" 
+                 class="editor-avatar-small">
+            <span class="editor-name">{{ translations.unknown }}</span>
+            {% endif %}
+        </div>
+        <span class="badge category-badge">{{ translations[recipe.category] }}</span>
+        
+        {% if current_user.can_edit %}
+        <div class="edit-controls">
+            <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" class="btn btn-sm btn-light edit-icon-btn">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteRecipeModal">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <div class="recipe-hero-content">
+        <div class="recipe-title-container">
+            <h1>{{ recipe.title }}</h1>
+        </div>
+    </div>
+</div>
+
+<!-- Main content with card-based layout -->
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Description and Family Memory row - back to side-by-side -->
+            <div class="row mb-4">
+                <!-- Elegant memory section - no white background, no title -->
+                <div class="col-lg-{% if random_family_photo %}7{% else %}12{% endif %}">
+                    <div class="memory-container h-100 border-0 bg-transparent">
+                        {% if recipe.memory %}
+                        <p class="memory-text">{{ recipe.memory }}</p>
+                        {% else %}
+                        <p class="memory-text default-memory-text">{{ translations.default_memory }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Family Memory card - side by side with memory -->
+                {% if random_family_photo %}
+                <div class="col-lg-5 d-flex">
+                    <div class="family-memory-card-modern flex-grow-1">
+                        <div class="memory-photo-container" 
+                             data-bs-toggle="modal" 
+                             data-bs-target="#familyPhotoModal"
+                             data-photo-src="{{ url_for('protected_family_media', filename=random_family_photo.filename) }}"
+                             data-photo-year="{{ random_family_photo.year }}"
+                             data-photo-desc="{{ random_family_photo.description }}">
+                            <img src="{{ url_for('protected_family_media', filename=random_family_photo.filename) }}" 
+                                 class="memory-fullsize-image" alt="Családi emlék">
+                            <div class="memory-photo-overlay">
+                                <div class="memory-badge">
+                                    <i class="bi bi-heart-fill text-danger"></i>
+                                    {% if random_family_photo.year %}<span class="ms-1">{{ random_family_photo.year }}</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Ingredients -->
+            <div class="recipe-card-modern mb-4">
+                <h4 class="section-title"><i class="bi bi-list-check me-2"></i>{{ translations.ingredients }}</h4>
+                <div class="ingredients-grid">
+                    {% for ingredient in recipe.ingredients %}
+                    <div class="ingredient-item">
+                        <span class="ingredient-name">{{ ingredient.name }}</span>
+                        {% if ingredient.amount or ingredient.unit %}
+                        <span class="ingredient-amount">
+                            {% if ingredient.amount %}{{ ingredient.amount }}{% endif %}
+                            {% if ingredient.unit %}
+                                {% if ingredient.unit == 'g' %} g
+                                {% elif ingredient.unit == 'dkg' %} dkg
+                                {% elif ingredient.unit == 'pcs' %} db
+                                {% elif ingredient.unit == 'coffee_spoon' %} kk
+                                {% elif ingredient.unit == 'teaspoon' %} tk
+                                {% elif ingredient.unit == 'tablespoon' %} ek
+                                {% elif ingredient.unit == 'ml' %} ml
+                                {% elif ingredient.unit == 'liter' %} l
+                                {% elif ingredient.unit == 'pinch' %} csipet
+                                {% elif ingredient.unit == 'little' %} kevés
+                                {% elif ingredient.unit == 'lot' %} sok
+                                {% else %} {{ ingredient.unit }}{% endif %}
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Steps - Collapsible -->
+            <div class="recipe-card-modern">
+                <h4 class="section-title"><i class="bi bi-signpost-2 me-2"></i>{{ translations.steps }}</h4>
+                <div class="accordion" id="stepsAccordion">
+                    {% for step in recipe.steps|sort(attribute='order') %}
+                    <div class="accordion-item step-item">
+                        <h2 class="accordion-header" id="heading-{{ step.id }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse-{{ step.id }}" aria-expanded="false" 
+                                    aria-controls="collapse-{{ step.id }}">
+                                <span class="step-number">{{ step.order }}</span>
+                                <span class="step-preview">{{ step.description|truncate(50) }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ step.id }}" class="accordion-collapse collapse" 
+                             aria-labelledby="heading-{{ step.id }}" data-bs-parent="#stepsAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-{% if step.image %}8{% else %}12{% endif %}">
+                                        <p>{{ step.description }}</p>
+                                    </div>
+                                    {% if step.image %}
+                                    <div class="col-md-4">
+                                        <img src="{{ url_for('protected_media', filename='square_' + step.image) }}" 
+                                             class="img-fluid rounded step-image-thumbnail" 
+                                             data-full-img="{{ url_for('protected_media', filename=step.image) }}"
+                                             alt="Step {{ step.order }}"
+                                             onerror="this.onerror=null; this.src='{{ url_for('protected_media', filename=step.image) }}'; console.log('Falling back to original image');">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Step Image Modal -->
+<div class="modal fade" id="stepImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <img id="fullStepImage" class="img-fluid w-100" alt="Step Image">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezár</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Family Photo Modal -->
+<div class="modal fade" id="familyPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="familyPhotoYear"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="familyPhotoImage" class="img-fluid" alt="Családi emlék">
+            </div>
+            <div class="modal-footer">
+                <p class="text-muted mb-0 me-auto" id="familyPhotoDesc"></p>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezár</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Recipe Confirmation Modal -->
+<div class="modal fade" id="deleteRecipeModal" tabindex="-1" aria-labelledby="deleteRecipeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRecipeModalLabel">Recept törlése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Biztosan törölni szeretnéd ezt a receptet: <strong>{{ recipe.title }}</strong>?</p>
+                <p class="text-danger"><small>Ez a művelet nem visszavonható!</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
+                <form method="POST" action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}">
+                    <button type="submit" class="btn btn-danger">Törlés</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Step image modal
+    const stepImages = document.querySelectorAll('.step-image-thumbnail');
+    const fullStepImage = document.getElementById('fullStepImage');
+    
+    stepImages.forEach(img => {
+        img.addEventListener('click', function() {
+            const fullImageSrc = this.getAttribute('data-full-img');
+            fullStepImage.src = fullImageSrc;
+            const modal = new bootstrap.Modal(document.getElementById('stepImageModal'));
+            modal.show();
+        });
+    });
+
+    // Family photo modal handler
+    const memoryPhotoContainer = document.querySelector('.memory-photo-container');
+    if (memoryPhotoContainer) {
+        memoryPhotoContainer.addEventListener('click', function() {
+            const photoSrc = this.getAttribute('data-photo-src');
+            const photoYear = this.getAttribute('data-photo-year');
+            const photoDesc = this.getAttribute('data-photo-desc');
+            
+            document.getElementById('familyPhotoImage').src = photoSrc;
+            document.getElementById('familyPhotoYear').textContent = photoYear ? photoYear : '';
+            document.getElementById('familyPhotoDesc').textContent = photoDesc || '';
+        });
+    }
+});
+</script>
+{% endblock %}

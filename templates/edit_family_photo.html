@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="mb-4">Kép Szerkesztése</h2>
+                    
+                    <div class="mb-4 text-center">
+                        <img src="{{ url_for('protected_family_media', filename=photo.filename) }}" 
+                             class="img-fluid rounded" style="max-height: 400px;" 
+                             alt="Family photo">
+                    </div>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fs-5">Kép adatai <span class="text-muted small">(opcionális)</span></label>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label for="description" class="form-label">Leírás</label>
+                                    <input type="text" id="description" name="description" class="form-control" 
+                                           value="{{ photo.description or '' }}" placeholder="Családi esemény, személyek a képen, stb.">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="year" class="form-label">Év</label>
+                                    <input type="number" id="year" name="year" class="form-control" 
+                                           min="1900" max="2100" value="{{ photo.year or '' }}" placeholder="ÉÉÉÉ">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('family_photos') }}" class="btn btn-outline-secondary me-md-2">{{ translations.cancel }}</a>
+                            <button type="submit" class="btn btn-primary btn-lg">Mentés</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

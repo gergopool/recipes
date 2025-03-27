@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% import '_form_macros.html' as forms %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4">{{ translations.upload }}</h2>
+            {{ forms.recipe_form(url_for('upload_recipe'), is_edit=False, translations=translations) }}
+            <div class="mb-3">
+                <label for="memory" class="form-label">{{ translations.memory }}</label>
+                <textarea class="form-control" id="memory" name="memory" rows="4" 
+                          placeholder="{{ translations.memory_placeholder }}"></textarea>
+                <div class="form-text">{{ translations.memory_help }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

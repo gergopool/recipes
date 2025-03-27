@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4">Üdvözöllek Anyukám receptjeinél!</h1>
+    <p class="lead">Itt megtalálod minden kedvenc családi receptünket</p>
+    
+    {% if not current_user.is_authenticated %}
+    <div class="mt-4">
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-2">{{ translations.login }}</a>
+        <a href="{{ url_for('browse') }}" class="btn btn-outline-primary btn-lg">{{ translations.browse }}</a>
+    </div>
+    {% else %}
+    <div class="mt-4">
+        <a href="{{ url_for('browse') }}" class="btn btn-primary btn-lg me-2">{{ translations.browse }}</a>
+        {% if current_user.can_edit %}
+        <a href="{{ url_for('upload_recipe') }}" class="btn btn-success btn-lg">{{ translations.upload }}</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <h3><i class="bi bi-book text-primary"></i></h3>
+                <h4 class="card-title">Receptek</h4>
+                <p class="card-text">Böngéssz a család kedvenc receptjei között</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <h3><i class="bi bi-search text-primary"></i></h3>
+                <h4 class="card-title">Keresés</h4>
+                <p class="card-text">Találd meg gyorsan amit keresel</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <h3><i class="bi bi-images text-primary"></i></h3>
+                <h4 class="card-title">Képek</h4>
+                <p class="card-text">Lépésről lépésre fotókkal</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

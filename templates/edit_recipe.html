@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% import '_form_macros.html' as forms %}
+
+{% block content %}
+<div class="container">
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4">{{ translations.edit }}: {{ recipe.title }}</h2>
+            {{ forms.recipe_form(url_for('edit_recipe', recipe_id=recipe.id), recipe=recipe, is_edit=True, translations=translations) }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Script loaded for edit page');
+    
+    // Add handling for step image deletion buttons
+    document.querySelectorAll('.delete-step-image-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const stepIndex = this.dataset.stepIndex;
+            console.log(`Deleting image for step ${stepIndex}`);
+            
+            // Set the hidden input to remove the image
+            const removeInput = document.getElementById(`remove_step_image_${stepIndex}`);
+            if (removeInput) {
+                removeInput.value = "1";
+                console.log(`Set remove flag for step ${stepIndex} image`);
+            }
+            
+            // Hide the image preview
+            const previewContainer = this.closest('.step-image-preview-' + stepIndex);
+            if (previewContainer) {
+                previewContainer.classList.add('d-none');
+                console.log(`Hid preview for step ${stepIndex}`);
+            }
+            
+            // Show the file input
+            const fileInput = document.getElementById(`step_image_${stepIndex}`);
+            if (fileInput) {
+                fileInput.classList.remove('d-none');
+                console.log(`Showed file input for step ${stepIndex}`);
+            }
+        });
+    });
+    
+    // Add handling for step removal
+    document.querySelectorAll('.remove-step').forEach(function(button) {
+        button.addEventListener('click', function() {
+            if (confirm('Are you sure you want to remove this step?')) {
+                const stepRow = this.closest('.step-row');
+                if (stepRow) {
+                    stepRow.remove();
+                    console.log('Step removed');
+                    
+                    // Renumber the remaining steps
+                    renumberSteps();
+                }
+            }
+        });
+    });
+    
+    // Function to renumber steps
+    function renumberSteps() {
+        const stepRows = document.querySelectorAll('.step-row');
+        stepRows.forEach(function(row, index) {
+            // Update textarea name
+            const textarea = row.querySelector('textarea');
+            if (textarea) {
+                textarea.name = `step_description_${index}`;
+            }
+            
+            // Update image inputs
+            const imageInput = row.querySelector('input[type="file"]');
+            if (imageInput) {
+                imageInput.name = `step_image_${index}`;
+                imageInput.id = `step_image_${index}`;
+                imageInput.dataset.stepIndex = index;
+            }
+            
+            // Update hidden input
+            const removeInput = row.querySelector('input[type="hidden"]');
+            if (removeInput) {
+                removeInput.id = `remove_step_image_${index}`;
+                removeInput.name = `remove_step_image_${index}`;
+            }
+            
+            // Update remove button
+            const removeBtn = row.querySelector('.remove-step');
+            if (removeBtn) {
+                removeBtn.dataset.stepIndex = index;
+            }
+            
+            // Update delete image button
+            const deleteImgBtn = row.querySelector('.delete-step-image-btn');
+            if (deleteImgBtn) {
+                deleteImgBtn.dataset.stepIndex = index;
+            }
+            
+            console.log(`Renumbered step to ${index}`);
+        });
+    }
+    
+    // Apply improved image preview functionality to all step image inputs
+    document.querySelectorAll('.step-image-input').forEach(function(input) {
+        console.log(`Found step image input: ${input.id}`);
+        
+        input.addEventListener('change', function(e) {
+            console.log(`File selected for ${this.id}`);
+            const stepIndex = this.dataset.stepIndex;
+            const previewContainer = document.querySelector(`.step-image-preview-${stepIndex}`);
+            
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    console.log(`Image loaded in reader for step ${stepIndex}`);
+                    
+                    if (previewContainer) {
+                        previewContainer.classList.remove('d-none');
+                        const previewImg = previewContainer.querySelector('img');
+                        if (previewImg) {
+                            previewImg.src = e.target.result;
+                            console.log(`Preview image updated for step ${stepIndex}`);
+                        } else {
+                            console.error(`No preview image found in container for step ${stepIndex}`);
+                        }
+                    } else {
+                        console.error(`No preview container found for step ${stepIndex}`);
+                    }
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+    
+    // Handle step image deletion
+    document.querySelectorAll('.confirm-delete-step-image').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const stepIndex = this.dataset.stepIndex;
+            console.log(`Confirming deletion for step ${stepIndex}`);
+            
+            // Set the hidden input to remove the image
+            const removeInput = document.getElementById(`remove_step_image_${stepIndex}`);
+            if (removeInput) {
+                removeInput.value = "1";
+                console.log(`Set remove flag for step ${stepIndex}`);
+            }
+            
+            // Hide the image preview and show upload input
+            const previewContainer = document.querySelector(`.step-image-preview-${stepIndex}`);
+            if (previewContainer) {
+                previewContainer.classList.add('d-none');
+                console.log(`Hid preview for step ${stepIndex}`);
+            }
+            
+            // Show the file input
+            const fileInput = document.getElementById(`step_image_${stepIndex}`);
+            if (fileInput) {
+                fileInput.classList.remove('d-none');
+                console.log(`Showed file input for step ${stepIndex}`);
+            }
+            
+            // Close the modal
+            const modalId = `deleteStepImageModal_${stepIndex}`;
+            const modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

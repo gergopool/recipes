@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Családi Képek</h1>
+        
+        <!-- Always show upload button for family members -->
+        {% if current_user.is_family %}
+        <a href="{{ url_for('upload_family_photo') }}" class="btn btn-primary">
+            <i class="bi bi-cloud-upload me-1"></i>{{ translations.upload }}
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if photos %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for photo in photos %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#photoModal" 
+                   data-photo-src="{{ url_for('protected_family_media', filename=photo.filename) }}"
+                   data-photo-year="{{ photo.year }}"
+                   data-photo-desc="{{ photo.description }}"
+                   data-photo-id="{{ photo.id }}"
+                   class="photo-link">
+                    <img src="{{ url_for('protected_family_media', filename='thumb_' + photo.filename) }}" 
+                         class="card-img-top family-photo-thumb" 
+                         alt="Family photo">
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center my-5">
+        <p>Még nincsenek feltöltött családi képek.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Photo Modal (Lightbox) -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoModalYear"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="photoModalImage" class="img-fluid" alt="">
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <p class="text-muted mb-0" id="photoModalDesc"></p>
+                
+                <!-- Add an ID to the buttons container so we can debug it -->
+                {% if current_user.can_edit %}
+                <div id="photoEditButtons">
+                    <a href="#" id="editPhotoBtn" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-pencil"></i> Szerkesztés
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" 
+                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">
+                        <i class="bi bi-trash"></i> Törlés
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if current_user.can_edit %}
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Megerősítés szükséges</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Biztosan törölni szeretnéd ezt a képet? Ez a művelet nem vonható vissza.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégsem</button>
+                <form id="deletePhotoForm" method="POST">
+                    <button type="submit" class="btn btn-danger">Igen, törlöm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add debug information to help troubleshoot -->
+{% if current_user.can_edit %}
+<div class="d-none">
+    Debug: User can edit - buttons should appear
+</div>
+{% else %}
+<div class="d-none">
+    Debug: User cannot edit - buttons should not appear
+</div>
+{% endif %}
+
+<!-- Create the edit photo template -->
+<div class="modal fade" id="editPhotoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPhotoForm" method="POST">
+                    <!-- ... rest of the form ... -->
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const photoModal = document.getElementById('photoModal');
+    const photoLinks = document.querySelectorAll('.photo-link');
+    
+    let currentPhotoId = null;
+    
+    // Debug user permissions
+    console.log('User can edit: {% if current_user.can_edit %}true{% else %}false{% endif %}');
+    console.log('User is family: {% if current_user.is_family %}true{% else %}false{% endif %}');
+    console.log('Username: {{ current_user.username }}');
+    
+    photoLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const photoSrc = this.getAttribute('data-photo-src');
+            const photoYear = this.getAttribute('data-photo-year');
+            const photoDesc = this.getAttribute('data-photo-desc');
+            currentPhotoId = this.getAttribute('data-photo-id');
+            
+            document.getElementById('photoModalImage').src = photoSrc;
+            document.getElementById('photoModalYear').textContent = photoYear ? photoYear : '';
+            document.getElementById('photoModalDesc').textContent = photoDesc;
+            
+            // Update edit and delete buttons with the current photo ID
+            {% if current_user.can_edit %}
+            console.log('Setting up edit/delete buttons for photo ID:', currentPhotoId);
+            const editBtn = document.getElementById('editPhotoBtn');
+            const deleteForm = document.getElementById('deletePhotoForm');
+            
+            if (editBtn) {
+                editBtn.href = "{{ url_for('edit_family_photo', photo_id=0) }}".replace('0', currentPhotoId);
+                console.log('Edit button updated:', editBtn.href);
+            } else {
+                console.error('Edit button not found!');
+            }
+            
+            if (deleteForm) {
+                deleteForm.action = "{{ url_for('delete_family_photo', photo_id=0) }}".replace('0', currentPhotoId);
+                console.log('Delete form updated:', deleteForm.action);
+            } else {
+                console.error('Delete form not found!');
+            }
+            {% endif %}
+        });
+    });
+    
+    // Handle modal nesting issue - when closing delete confirmation, keep main modal open
+    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+    if (deleteConfirmModal) {
+        deleteConfirmModal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.add('modal-open');
+        });
+    }
+});
+</script>
+{% endblock %} 

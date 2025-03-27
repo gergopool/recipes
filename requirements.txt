@@ -1,0 +1,6 @@
+flash
+Flask-SQLAlchemy
+pillow
+python-dotenv
+werkzeug
+flask-login

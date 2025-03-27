@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search and filter controls -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="input-group">
+                <input type="text" id="search" class="form-control" placeholder="{{ translations.search }}...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="category-filter">
+                <option value="all">{{ translations.all_categories }}</option>
+                <option value="soup">{{ translations.soup }}</option>
+                <option value="main_dish">{{ translations.main_dish }}</option>
+                <option value="desert">{{ translations.desert }}</option>
+                <option value="other">{{ translations.other }}</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Recipe cards -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for recipe in recipes %}
+        <div class="col">
+            <div class="card h-100 recipe-card" data-recipe-url="{{ url_for('recipe_detail', recipe_id=recipe.id) }}">
+                <div class="card-img-container">
+                    {% if recipe.main_image %}
+                    <img 
+                        src="{{ url_for('protected_media', filename='thumb_' + recipe.main_image) }}" 
+                        onerror="this.onerror=null; this.src='{{ url_for('protected_media', filename=recipe.main_image) }}'"
+                        class="card-img-top recipe-img" 
+                        alt="{{ recipe.title }}">
+                    {% else %}
+                    <img 
+                        src="{{ url_for('static', filename='images/default.jpg') }}" 
+                        class="card-img-top recipe-img" 
+                        alt="{{ recipe.title }}">
+                    {% endif %}
+                    
+                    <!-- Image overlay with category and editor -->
+                    <div class="card-img-overlay">
+                        <div class="overlay-bottom">
+                            <div class="overlay-right">
+                                <span class="badge category-badge">{{ translations[recipe.category] }}</span>
+                                <div class="recipe-editor-small">
+                                    {% if recipe.user %}
+                                    <img src="{{ url_for('static', filename='images/' + recipe.user.username + '.jpg') }}" 
+                                         onerror="this.src='{{ url_for('static', filename='images/default-user.jpg') }}'" 
+                                         alt="{{ recipe.user.username }}" 
+                                         class="editor-avatar-small">
+                                    <span class="editor-name">{{ recipe.user.username }}</span>
+                                    {% else %}
+                                    <img src="{{ url_for('static', filename='images/default-user.jpg') }}" 
+                                         alt="Unknown" 
+                                         class="editor-avatar-small">
+                                    <span class="editor-name">{{ translations.unknown }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ recipe.title }}</h5>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- No results message -->
+    <div id="no-results" class="text-center my-5" style="display: none;">
+        <h4>{{ translations.no_recipes_found }}</h4>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const search = document.getElementById('search');
+    const categoryFilter = document.getElementById('category-filter');
+    const recipeCards = document.querySelectorAll('.recipe-card');
+    const noResults = document.getElementById('no-results');
+    
+    function filterRecipes() {
+        const searchTerm = search.value.toLowerCase();
+        const category = categoryFilter.value;
+        let visibleCount = 0;
+        
+        recipeCards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const cardCategory = card.querySelector('.category-badge').textContent;
+            const description = card.querySelector('.card-text') ? 
+                card.querySelector('.card-text').textContent.toLowerCase() : '';
+            
+            const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+            const matchesCategory = category === 'all' || cardCategory === category;
+            
+            if (matchesSearch && matchesCategory) {
+                card.closest('.col').style.display = 'block';
+                visibleCount++;
+            } else {
+                card.closest('.col').style.display = 'none';
+            }
+        });
+        
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    search.addEventListener('input', filterRecipes);
+    categoryFilter.addEventListener('change', filterRecipes);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,14 @@
+# Ignore contents but keep directories
+protected_uploads/*
+static/images/*
+
+# Don't ignore the .gitkeep files
+!protected_uploads/.gitkeep
+!static/images/.gitkeep
+
+# Other ignored files/directories
+recipes.db
+setup.py
+reset_password.py
+__pycache__/
+*.pyc

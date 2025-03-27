@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-info">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- File upload at the top -->
+                        <div class="mb-4">
+                            <label for="photo" class="form-label fs-5">Válassz egy képet</label>
+                            <input type="file" id="photo" name="photo" class="form-control form-control-lg" accept="image/*" required>
+                            <div class="form-text">Maximum méret: 5MB</div>
+                        </div>
+                        
+                        
+                        <div class="mb-3">
+                            <label class="form-label fs-5">Kép adatai <span class="text-muted small">(opcionális)</span></label>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label for="description" class="form-label">Leírás</label>
+                                    <input type="text" id="description" name="description" class="form-control" placeholder="Családi esemény, személyek a képen, stb.">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="year" class="form-label">Év</label>
+                                    <input type="number" id="year" name="year" class="form-control" min="1900" max="2100" placeholder="ÉÉÉÉ">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('family_photos') }}" class="btn btn-outline-secondary me-md-2">{{ translations.cancel }}</a>
+                            <button type="submit" class="btn btn-primary btn-lg">{{ translations.upload }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
